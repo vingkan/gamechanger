@@ -225,3 +225,35 @@ body {
   font-size: 24px;
   padding-bottom: 5px;
 }
+
+/* Flying Score Animation */
+
+.flying-score {
+  position: fixed;
+  left: var(--start-x, 0);
+  top: var(--start-y, 0);
+  font-size: 64px;
+  font-family: "Orbitron", sans-serif;
+  color: #3c9bbd;
+  font-weight: bold;
+  text-shadow: 0 0 20px rgba(60, 155, 189, 0.8);
+  pointer-events: none;
+  z-index: 9999;
+  animation: fly-to-podium 1s cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
+  transform: translate(-50%, -50%);
+}
+
+@keyframes fly-to-podium {
+  0% {
+    left: var(--start-x, 0);
+    top: var(--start-y, 0);
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    left: var(--end-x, 0);
+    top: var(--end-y, 0);
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.5);
+  }
+}

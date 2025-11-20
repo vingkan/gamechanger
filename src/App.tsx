@@ -109,13 +109,12 @@ function getCurrentRoundPlayerNames(
   playerIds: Set<number>,
   players: Player[]
 ): string[] {
-  return Array.from(playerIds).map(
-    (id) => players.find((player) => player.id === id)?.name ?? ""
-  );
+  return players
+    .filter((player) => playerIds.has(player.id))
+    .map((player) => player.name);
 }
 
-function formatCurrentRoundPlayerNames(unsortedNames: string[]): string {
-  const playerNames = [...unsortedNames].sort();
+function formatCurrentRoundPlayerNames(playerNames: string[]): string {
   if (playerNames.length === 0) {
     return "";
   }
@@ -182,6 +181,7 @@ function PlayerScoreContainer({
         "player-score-container",
         isBusted(player) ? "busted" : "",
       ].join(" ")}
+      data-player-id={player.id}
     >
       <div className="content">
         <div
@@ -205,6 +205,15 @@ function PlayerScoreContainer({
   );
 }
 
+type FlyingScore = {
+  id: string;
+  score: number;
+  startX: number;
+  startY: number;
+  endX: number;
+  endY: number;
+};
+
 function App() {
   const { players, addPlayer, renamePlayer, removePlayer, addPointsToPlayer } =
     usePlayers();
@@ -215,6 +224,7 @@ function App() {
   const [currentRoundPrompt, setCurrentRoundPrompt] = useState<Prompt | null>(
     null
   );
+  const [flyingScores, setFlyingScores] = useState<FlyingScore[]>([]);
 
   const createRoundOf = (n: number) => {
     const nextRoundPlayerIds = getRandomRoundPlayerIds(
@@ -244,18 +254,48 @@ function App() {
     setCurrentRoundPrompt(nextRoundPrompt);
   };
 
-  const finalizeRound = (score: number) => {
-    if (currentRoundPrompt === null) {
+  const finalizeRound = (score: number, sourceRect: DOMRect) => {
+    if (currentRoundPrompt === null || currentRoundPlayerIds.size === 0) {
       return;
     }
 
-    for (const playerId of currentRoundPlayerIds) {
-      addPointsToPlayer(playerId, score);
-    }
+    // Get positions of all player podiums for current round
+    const newFlyingScores: FlyingScore[] = [];
 
-    addUsedPrompt(currentRoundPrompt.id);
-    setCurrentRoundPlayerIds(new Set());
-    setCurrentRoundPrompt(null);
+    currentRoundPlayerIds.forEach((playerId) => {
+      const playerElement = document.querySelector(
+        `[data-player-id="${playerId}"]`
+      );
+      if (playerElement) {
+        const playerRect = playerElement.getBoundingClientRect();
+        // Target the score area within the player container
+        const scoreElement = playerElement.querySelector(".score");
+        const scoreRect = scoreElement?.getBoundingClientRect() || playerRect;
+
+        newFlyingScores.push({
+          id: `${playerId}-${Date.now()}`,
+          score,
+          startX: sourceRect.left + sourceRect.width / 2,
+          startY: sourceRect.top + sourceRect.height / 2,
+          endX: scoreRect.left + scoreRect.width / 2,
+          endY: scoreRect.top + scoreRect.height / 2,
+        });
+      }
+    });
+
+    setFlyingScores(newFlyingScores);
+
+    // Wait for animation to complete, then update scores
+    setTimeout(() => {
+      for (const playerId of currentRoundPlayerIds) {
+        addPointsToPlayer(playerId, score);
+      }
+
+      addUsedPrompt(currentRoundPrompt.id);
+      setCurrentRoundPlayerIds(new Set());
+      setCurrentRoundPrompt(null);
+      setFlyingScores([]);
+    }, 1000); // Animation duration
   };
 
   return (
@@ -272,7 +312,9 @@ function App() {
           <div className="prompt-container">
             <div className="prompt">{currentRoundPrompt.text}</div>
           </div>
-          <SortableJudgeScores onScore={(score) => finalizeRound(score)} />
+          <SortableJudgeScores
+            onScore={(score, sourceRect) => finalizeRound(score, sourceRect)}
+          />
         </div>
       )}
       <div className="footer">
@@ -310,6 +352,22 @@ function App() {
           </button>
         </div>
       </div>
+      {flyingScores.map((flyingScore) => (
+        <div
+          key={flyingScore.id}
+          className="flying-score"
+          style={
+            {
+              "--start-x": `${flyingScore.startX}px`,
+              "--start-y": `${flyingScore.startY}px`,
+              "--end-x": `${flyingScore.endX}px`,
+              "--end-y": `${flyingScore.endY}px`,
+            } as React.CSSProperties
+          }
+        >
+          {flyingScore.score}
+        </div>
+      ))}
     </>
   );
 }

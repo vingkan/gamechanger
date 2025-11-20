@@ -3,7 +3,7 @@ import { useState, useRef } from "react";
 export function SortableJudgeScores({
   onScore,
 }: {
-  onScore: (score: number) => void;
+  onScore: (score: number, sourceRect: DOMRect) => void;
 }) {
   const [judgeScores, setJudgeScores] = useState<number[]>([0]);
   const [medianIndex, setMedianIndex] = useState<number | null>(null);
@@ -98,10 +98,20 @@ export function SortableJudgeScores({
   };
 
   const handleFinalizeScore = () => {
-    if (medianIndex === null) return;
+    if (medianIndex === null || !scoresContainerRef.current) return;
+
     const medianScore = judgeScores[medianIndex];
-    onScore(medianScore);
-    setJudgeScores([0]);
+
+    // Get the median score element's position
+    const medianElement =
+      scoresContainerRef.current.querySelector(`.judge-score.median`);
+
+    if (medianElement) {
+      const rect = medianElement.getBoundingClientRect();
+      onScore(medianScore, rect);
+      setJudgeScores([0]);
+      setMedianIndex(null);
+    }
   };
 
   return (
