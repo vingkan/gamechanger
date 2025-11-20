@@ -21,39 +21,106 @@ body {
 }
 
 .header .current-round-players {
-  font-size: 36px;
-  font-family: "Major Mono Display", monospace;
+  font-size: 48px;
+  font-family: "Bebas Neue", sans-serif;
   text-transform: lowercase;
   margin: var(--spacing-2);
   padding: var(--spacing-2);
+  cursor: pointer;
 }
 
 /* Main */
 
 .main {
   width: 100%;
-  margin-top: 100px;
+  margin-top: 200px;
   height: calc(100vh - 600px);
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: start;
   gap: var(--spacing-4);
 }
 
+.main .prompt-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 75%;
+  height: 60%;
+}
+
 .main .prompt {
-  height: 50%;
   font-size: 72px;
   font-family: "Bebas Neue", sans-serif;
   font-weight: bold;
   text-align: center;
 }
 
+.main .judge-container {
+  position: relative;
+  display: inline-block;
+}
+
 .main .judge-container .judge-scores {
-  font-size: 72px;
+  font-size: 64px;
   font-family: "Major Mono Display", monospace;
   text-transform: lowercase;
   text-align: center;
+  outline: none;
+  user-select: none;
+  cursor: pointer;
+}
+
+.main .judge-container .judge-scores .judge-score {
+  display: inline-block;
+  margin: 0 10px;
+  transition: transform 0.6s cubic-bezier(0.4, 0.0, 0.2, 1),
+              color 0.3s ease,
+              text-shadow 0.3s ease;
+  position: relative;
+}
+
+.main .judge-container .judge-scores .judge-score.median {
+  color: #3c9bbd;
+  text-shadow: 0 0 20px rgba(60, 155, 189, 0.5);
+  font-weight: bold;
+}
+
+.main .judge-container .button {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-top: 2px;
+  background: none;
+  outline: none;
+  border: 2px solid black;
+  border-radius: 8px;
+  width: 60px;
+  height: 60px;
+  font-size: 32px;
+  font-family: "Orbitron", sans-serif;
+  opacity: 0.25;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.main .judge-container .button:hover {
+  opacity: 1.0;
+}
+
+.main .judge-container .button:disabled {
+  cursor: not-allowed;
+  opacity: 0.1;
+}
+
+.main .judge-container .sort-button {
+  right: -100px;
+}
+
+.main .judge-container .finalize-button {
+  right: -170px;
 }
 
 /* Footer */
@@ -107,7 +174,7 @@ body {
   font-size: 64px;
   line-height: 68px;
   font-family: "Orbitron", sans-serif;
-  color: #3c9bbd;
+  color: #a4202f;
 }
 
 .player-score-container.busted {
@@ -115,7 +182,7 @@ body {
 }
 
 .player-score-container.busted .score {
-  color: #a4202f;
+  color: #f8a546;
 }
 
 .player-score-container .podium {

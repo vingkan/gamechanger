@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { SortableJudgeScores } from "./SortableJudgeScores";
+import { getRandomPrompt, type Prompt } from "./prompts";
 
 const MAX_POINTS_BEFORE_BUST = 31;
 
@@ -8,6 +10,10 @@ type Player = {
   score: number;
   roundsPlayed: number;
 };
+
+function isBusted(player: Player): boolean {
+  return player.score > MAX_POINTS_BEFORE_BUST;
+}
 
 function getPlayersFromLocalStorage(): Player[] {
   const raw = localStorage.getItem("gameChangerPlayers");
@@ -77,7 +83,7 @@ function usePlayers() {
   };
 }
 
-function getRandomRoundOfPlayerIds(players: Player[], n: number): Set<number> {
+function getRandomRoundPlayerIds(players: Player[], n: number): Set<number> {
   const maxRoundsPlayed = Math.max(
     ...players.map((player) => player.roundsPlayed)
   );
@@ -126,6 +132,41 @@ function formatCurrentRoundPlayerNames(unsortedNames: string[]): string {
   return `${rest.join(", ")}, and ${last ?? ""}`;
 }
 
+function getUsedPrompts(): Set<string> {
+  const raw = localStorage.getItem("gameChangerUsedPrompts");
+  try {
+    return new Set(JSON.parse(raw ?? "[]") as string[]);
+  } catch (error) {
+    console.error(error);
+    return new Set();
+  }
+}
+
+function saveUsedPrompts(usedPrompts: Set<string>) {
+  localStorage.setItem(
+    "gameChangerUsedPrompts",
+    JSON.stringify(Array.from(usedPrompts))
+  );
+}
+
+function useUsedPrompts() {
+  const [usedPrompts, setUsedPrompts] = useState<Set<string>>(() => {
+    return getUsedPrompts();
+  });
+
+  return {
+    usedPrompts,
+    addUsedPrompt: (promptId: string) => {
+      setUsedPrompts((prev) => {
+        const nextUsedPrompts = new Set(prev);
+        nextUsedPrompts.add(promptId);
+        saveUsedPrompts(nextUsedPrompts);
+        return nextUsedPrompts;
+      });
+    },
+  };
+}
+
 function PlayerScoreContainer({
   player,
   renamePlayer,
@@ -139,7 +180,7 @@ function PlayerScoreContainer({
     <div
       className={[
         "player-score-container",
-        player.score > MAX_POINTS_BEFORE_BUST ? "busted" : "",
+        isBusted(player) ? "busted" : "",
       ].join(" ")}
     >
       <div className="content">
@@ -165,34 +206,75 @@ function PlayerScoreContainer({
 }
 
 function App() {
-  const { players, addPlayer, renamePlayer, removePlayer } = usePlayers();
+  const { players, addPlayer, renamePlayer, removePlayer, addPointsToPlayer } =
+    usePlayers();
+  const { usedPrompts, addUsedPrompt } = useUsedPrompts();
   const [currentRoundPlayerIds, setCurrentRoundPlayerIds] = useState<
     Set<number>
   >(new Set());
+  const [currentRoundPrompt, setCurrentRoundPrompt] = useState<Prompt | null>(
+    null
+  );
 
   const createRoundOf = (n: number) => {
-    const nextRound = getRandomRoundOfPlayerIds([...players], n);
-    setCurrentRoundPlayerIds(nextRound);
+    const nextRoundPlayerIds = getRandomRoundPlayerIds(
+      [...players.filter((player) => !isBusted(player))],
+      n
+    );
+    setCurrentRoundPlayerIds(nextRoundPlayerIds);
+    setCurrentRoundPrompt(null);
+  };
+
+  const choosePrompt = () => {
+    if (currentRoundPlayerIds.size === 0) {
+      return;
+    }
+    const nextRoundPrompt = getRandomPrompt(
+      currentRoundPlayerIds.size,
+      usedPrompts
+    );
+    if (nextRoundPrompt === null) {
+      setCurrentRoundPrompt({
+        id: "no-prompt-found",
+        text: `Sorry, no ${currentRoundPlayerIds.size} player prompts left :(`,
+        playersNeeded: currentRoundPlayerIds.size,
+      });
+      return;
+    }
+    setCurrentRoundPrompt(nextRoundPrompt);
+  };
+
+  const finalizeRound = (score: number) => {
+    if (currentRoundPrompt === null) {
+      return;
+    }
+
+    for (const playerId of currentRoundPlayerIds) {
+      addPointsToPlayer(playerId, score);
+    }
+
+    addUsedPrompt(currentRoundPrompt.id);
+    setCurrentRoundPlayerIds(new Set());
+    setCurrentRoundPrompt(null);
   };
 
   return (
     <>
       <div className="header">
-        <div className="current-round-players">
+        <div className="current-round-players" onClick={choosePrompt}>
           {formatCurrentRoundPlayerNames(
             getCurrentRoundPlayerNames(currentRoundPlayerIds, players)
           )}
         </div>
       </div>
-      <div className="main">
-        <div className="prompt">
-          A meet-cute where what they ran into each other and dropped is
-          actually important and should be the focus of their attention
+      {currentRoundPrompt && (
+        <div className="main">
+          <div className="prompt-container">
+            <div className="prompt">{currentRoundPrompt.text}</div>
+          </div>
+          <SortableJudgeScores onScore={(score) => finalizeRound(score)} />
         </div>
-        <div className="judge-container">
-          <div className="judge-scores">7 8 9</div>
-        </div>
-      </div>
+      )}
       <div className="footer">
         <div className="player-score-carousel">
           {players.map((player) => (
