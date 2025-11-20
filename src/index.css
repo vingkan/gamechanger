@@ -21,7 +21,7 @@ body {
 }
 
 .header .current-round-players {
-  font-size: 48px;
+  font-size: 80px;
   font-family: "Bebas Neue", sans-serif;
   text-transform: lowercase;
   margin: var(--spacing-2);
@@ -34,7 +34,7 @@ body {
 .main {
   width: 100%;
   margin-top: 200px;
-  height: calc(100vh - 600px);
+  height: calc(100vh - 500px);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -48,17 +48,19 @@ body {
   align-items: center;
   justify-content: center;
   width: 75%;
+  max-width: 1000px;
   height: 60%;
 }
 
 .main .prompt {
-  font-size: 72px;
+  font-size: 120px;
   font-family: "Bebas Neue", sans-serif;
   font-weight: bold;
   text-align: center;
 }
 
 .main .judge-container {
+  margin-top: var(--spacing-2);
   position: relative;
   display: inline-block;
 }
@@ -140,8 +142,7 @@ body {
   display: flex;
   flex-direction: row;
   gap: var(--spacing-2);
-  overflow-x: auto;
-  white-space: nowrap;
+  overflow-y: hidden;
 }
 
 .player-score-container {
@@ -150,6 +151,7 @@ body {
   align-items: center;
   justify-content: center;
   width: 240px;
+  transition: transform 1s cubic-bezier(0.4, 0.0, 0.2, 1);
 }
 
 .player-score-container .content {
@@ -179,6 +181,7 @@ body {
 
 .player-score-container.busted {
   opacity: 0.5;
+  transform: translateY(150px);
 }
 
 .player-score-container.busted .score {
@@ -194,11 +197,18 @@ body {
 
 .footer .button-container {
   position: fixed;
-  right: 0;
   bottom: 0;
   display: flex;
   flex-direction: column;
   margin: var(--spacing-1);
+}
+
+.footer .button-container.buttons-left {
+  left: 0;
+}
+
+.footer .button-container.buttons-right {
+  right: 0;
 }
 
 .footer .button-container .button {

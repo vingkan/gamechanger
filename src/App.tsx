@@ -80,6 +80,9 @@ function usePlayers() {
         )
       );
     },
+    removeAllPlayers: () => {
+      setAndSavePlayers(() => []);
+    },
   };
 }
 
@@ -163,6 +166,10 @@ function useUsedPrompts() {
         return nextUsedPrompts;
       });
     },
+    removeAllUsedPrompts: () => {
+      setUsedPrompts(() => new Set());
+      saveUsedPrompts(new Set());
+    },
   };
 }
 
@@ -215,9 +222,15 @@ type FlyingScore = {
 };
 
 function App() {
-  const { players, addPlayer, renamePlayer, removePlayer, addPointsToPlayer } =
-    usePlayers();
-  const { usedPrompts, addUsedPrompt } = useUsedPrompts();
+  const {
+    players,
+    addPlayer,
+    renamePlayer,
+    removePlayer,
+    addPointsToPlayer,
+    removeAllPlayers,
+  } = usePlayers();
+  const { usedPrompts, addUsedPrompt, removeAllUsedPrompts } = useUsedPrompts();
   const [currentRoundPlayerIds, setCurrentRoundPlayerIds] = useState<
     Set<number>
   >(new Set());
@@ -298,6 +311,14 @@ function App() {
     }, 1000); // Animation duration
   };
 
+  const resetAll = () => {
+    removeAllPlayers();
+    removeAllUsedPrompts();
+    setCurrentRoundPlayerIds(new Set());
+    setCurrentRoundPrompt(null);
+    setFlyingScores([]);
+  };
+
   return (
     <>
       <div className="header">
@@ -318,6 +339,11 @@ function App() {
         </div>
       )}
       <div className="footer">
+        <div className="button-container buttons-left">
+          <button className="button" onClick={() => resetAll()}>
+            ×
+          </button>
+        </div>
         <div className="player-score-carousel">
           {players.map((player) => (
             <PlayerScoreContainer
@@ -328,7 +354,7 @@ function App() {
             />
           ))}
         </div>
-        <div className="button-container">
+        <div className="button-container buttons-right">
           <button
             className="button create-round"
             onClick={() => createRoundOf(3)}
