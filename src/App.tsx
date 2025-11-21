@@ -265,6 +265,7 @@ function App() {
       return;
     }
     setCurrentRoundPrompt(nextRoundPrompt);
+    new Audio("./ding.mp3").play();
   };
 
   const finalizeRound = (score: number, sourceRect: DOMRect) => {
