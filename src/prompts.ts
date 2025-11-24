@@ -115,11 +115,60 @@ const ALL_PROMPTS = [
   ...PROMPTS_THREE_PLAYERS,
 ];
 
+// Export for reset functionality
+export const DEFAULT_PROMPTS = ALL_PROMPTS;
+
+// localStorage keys
+const PROMPTS_KEY = "gameChangerPrompts";
+const NEXT_ID_KEY = "gameChangerNextPromptId";
+
+export function getPromptsFromLocalStorage(): Prompt[] {
+  const raw = localStorage.getItem(PROMPTS_KEY);
+  if (raw === null || raw === "") {
+    // Initialize with default prompts
+    savePromptsToLocalStorage(DEFAULT_PROMPTS);
+    localStorage.setItem(NEXT_ID_KEY, String(DEFAULT_PROMPTS.length));
+    return DEFAULT_PROMPTS;
+  }
+  try {
+    return JSON.parse(raw) as Prompt[];
+  } catch (error) {
+    console.error(error);
+    return DEFAULT_PROMPTS;
+  }
+}
+
+export function savePromptsToLocalStorage(prompts: Prompt[]) {
+  localStorage.setItem(PROMPTS_KEY, JSON.stringify(prompts));
+}
+
+export function getNextPromptId(): string {
+  const raw = localStorage.getItem(NEXT_ID_KEY);
+  if (raw === null) {
+    const nextId = DEFAULT_PROMPTS.length;
+    localStorage.setItem(NEXT_ID_KEY, String(nextId));
+    return String(nextId);
+  }
+  return raw;
+}
+
+export function incrementNextPromptId(): string {
+  const currentId = parseInt(getNextPromptId(), 10);
+  const nextId = currentId + 1;
+  localStorage.setItem(NEXT_ID_KEY, String(nextId));
+  return String(currentId);
+}
+
+export function resetPromptsToDefaults() {
+  savePromptsToLocalStorage(DEFAULT_PROMPTS);
+  localStorage.setItem(NEXT_ID_KEY, String(DEFAULT_PROMPTS.length));
+}
+
 export function getRandomPrompt(
   playersNeeded: number,
   usedPrompts: Set<string>
 ): Prompt | null {
-  const prompts = ALL_PROMPTS.filter(
+  const prompts = getPromptsFromLocalStorage().filter(
     (prompt) =>
       prompt.playersNeeded === playersNeeded && !usedPrompts.has(prompt.id)
   );

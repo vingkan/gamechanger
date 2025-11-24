@@ -1,6 +1,11 @@
 import { useState } from "react";
 import { SortableJudgeScores } from "./SortableJudgeScores";
-import { getRandomPrompt, type Prompt } from "./prompts";
+import {
+  getRandomPrompt,
+  type Prompt,
+  resetPromptsToDefaults,
+} from "./prompts";
+import { PromptEditor } from "./PromptEditor";
 
 const MAX_POINTS_BEFORE_BUST = 31;
 
@@ -238,6 +243,7 @@ function App() {
     null
   );
   const [flyingScores, setFlyingScores] = useState<FlyingScore[]>([]);
+  const [showPromptEditor, setShowPromptEditor] = useState(false);
 
   const createRoundOf = (n: number) => {
     const nextRoundPlayerIds = getRandomRoundPlayerIds(
@@ -320,6 +326,11 @@ function App() {
     setFlyingScores([]);
   };
 
+  const resetAllWithPrompts = () => {
+    resetAll();
+    resetPromptsToDefaults();
+  };
+
   return (
     <>
       <div className="header">
@@ -356,6 +367,12 @@ function App() {
           ))}
         </div>
         <div className="button-container buttons-right">
+          <button
+            className="button edit-prompts"
+            onClick={() => setShowPromptEditor(true)}
+          >
+            ✎
+          </button>
           <button
             className="button create-round"
             onClick={() => createRoundOf(3)}
@@ -395,6 +412,12 @@ function App() {
           {flyingScore.score}
         </div>
       ))}
+      {showPromptEditor && (
+        <PromptEditor
+          onClose={() => setShowPromptEditor(false)}
+          onReset={resetAllWithPrompts}
+        />
+      )}
     </>
   );
 }
